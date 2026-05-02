@@ -163,8 +163,8 @@ This works because users on social platforms have been trained to read hashtags 
 
 ## What to Build Next (4-Week Roadmap)
 
-### Week 1 — Personalised tags (everyone sees something different)
-Right now every user sees the same 12 tags. With a small onboarding step (pick 3 interests), the AI clustering prompt can be weighted toward topics the user cares about. The same RSS pipeline runs once; a lightweight re-ranking pass per user makes the results feel personal without an expensive per-user AI call.
+### Week 1 — Consistent tags for everyone
+Right now, because the AI re-runs every 30 minutes with no memory of the previous run, different users who hit the app at different points in the cache cycle can see slightly different tags — the AI clusters the same headlines but names or orders them differently each time. The goal is to lock the output so every user sees the exact same 12 tags within a given window. The fix is straightforward: persist the AI output to disk so server restarts and new requests all serve the same result until the next scheduled refresh, rather than re-running the AI on every cache miss.
 
 ### Week 2 — Heuristic "hours before" (remove AI from time estimation)
 The current age calculation already uses RSS pubDates, but clusters sometimes contain headlines spanning many hours, making the "started X hours ago" figure feel misleading. A better heuristic: use the **median** pubDate rather than the earliest, and show a range (e.g. "2–5 घंटे पहले") when the spread is wide. This makes the figure more honest without any AI involvement.
@@ -181,3 +181,4 @@ The 30-minute cache means a story can break and users won't see it for half an h
 - **Trend history** — store scored results every 30 minutes in a database. Show a sparkline on each card: is this topic growing or shrinking over the last 6 hours?
 - **Source credibility weighting** — not all RSS sources are equal. A story covered by BBC Hindi should contribute more to the heat score than a smaller outlet. A per-source credibility weight (editable config) would improve ranking quality significantly.
 - **Content moderation filter** — a lightweight keyword blocklist (server-side, no AI) to prevent sensitive or harmful topics from surfacing in the feed, important for a platform with a broad Hindi-speaking audience.
+- **Heat score explainer in-app** — the detail screen already shows the heat score number, but users have no way to know what it means. A small tooltip or expandable panel explaining the formula in plain Hindi ("यह स्कोर खबरों की संख्या, ताज़गी, और कितनी जगहों से आई, इस पर निर्भर है") would build trust in the ranking and differentiate it from a black-box algorithm. The weights are already documented in code and easy to surface.
