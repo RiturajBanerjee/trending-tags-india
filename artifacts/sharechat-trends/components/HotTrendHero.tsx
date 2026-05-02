@@ -38,17 +38,20 @@ export function HotTrendHero({ trend }: Props) {
         },
       ]}
     >
+      {/* Purple-to-violet radial glow top-right */}
       <View style={styles.glow} />
+      {/* Soft lavender glow bottom-left */}
       <View style={styles.glow2} />
 
       <View style={styles.topRow}>
         <View style={styles.flameRow}>
-          <Feather name="zap" size={14} color="#FFE48A" />
+          <Feather name="zap" size={14} color="#F5D679" />
           <Text style={styles.topLabel}>आज का सबसे हॉट</Text>
         </View>
         <CategoryChip
           category={trend.category}
           labelHi={trend.categoryLabelHi}
+          heroMode
         />
       </View>
 
@@ -65,16 +68,12 @@ export function HotTrendHero({ trend }: Props) {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
-            {formatCount(trend.postsCount)}
-          </Text>
+          <Text style={styles.statValue}>{formatCount(trend.postsCount)}</Text>
           <Text style={styles.statLabel}>पोस्ट</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
-            {formatCount(trend.viewsCount)}
-          </Text>
+          <Text style={styles.statValue}>{formatCount(trend.viewsCount)}</Text>
           <Text style={styles.statLabel}>व्यू</Text>
         </View>
       </View>
@@ -89,29 +88,31 @@ export function HotTrendHero({ trend }: Props) {
 
 const styles = StyleSheet.create({
   hero: {
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 20,
     overflow: "hidden",
   },
+  // Deep indigo glow — top-right
   glow: {
     position: "absolute",
-    top: -60,
-    right: -40,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: "#FF6F2C",
-    opacity: 0.5,
+    top: -70,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "#7B3FC4",
+    opacity: 0.6,
   },
+  // Soft lavender glow — bottom-left
   glow2: {
     position: "absolute",
     bottom: -80,
     left: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "#FFB627",
-    opacity: 0.25,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "#9B59D0",
+    opacity: 0.35,
   },
   topRow: {
     flexDirection: "row",
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   tag: {
-    color: "#FFE48A",
+    color: "#F5D679",
     fontSize: 15,
     fontWeight: "700",
     marginTop: 2,
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.14)",
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 12,
     marginTop: 16,
   },
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   statLabel: {
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.80)",
     fontSize: 10,
     fontWeight: "600",
     marginTop: 2,
@@ -185,8 +186,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "rgba(0,0,0,0.18)",
-    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.20)",
+    borderRadius: 12,
     paddingVertical: 12,
     marginTop: 14,
   },

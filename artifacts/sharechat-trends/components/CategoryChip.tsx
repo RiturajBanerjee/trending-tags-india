@@ -7,9 +7,10 @@ type Props = {
   category: TrendCategory;
   labelHi: string;
   size?: "sm" | "md";
+  heroMode?: boolean; // white text on dark hero background
 };
 
-export function CategoryChip({ category, labelHi, size = "sm" }: Props) {
+export function CategoryChip({ category, labelHi, size = "sm", heroMode = false }: Props) {
   const colors = useColors();
 
   const tintMap: Record<TrendCategory, string> = {
@@ -26,14 +27,37 @@ export function CategoryChip({ category, labelHi, size = "sm" }: Props) {
 
   const tint = tintMap[category];
 
+  if (heroMode) {
+    return (
+      <View
+        style={[
+          styles.chip,
+          size === "md" && styles.chipMd,
+          { backgroundColor: "rgba(255,255,255,0.22)", borderColor: "rgba(255,255,255,0.35)" },
+        ]}
+      >
+        <View style={[styles.dot, { backgroundColor: "#FFFFFF" }]} />
+        <Text
+          style={[
+            styles.label,
+            size === "md" && styles.labelMd,
+            { color: "#FFFFFF" },
+          ]}
+        >
+          {labelHi}
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
         styles.chip,
         size === "md" && styles.chipMd,
         {
-          backgroundColor: tint + "1A",
-          borderColor: tint + "33",
+          backgroundColor: tint + "18",
+          borderColor: tint + "30",
         },
       ]}
     >

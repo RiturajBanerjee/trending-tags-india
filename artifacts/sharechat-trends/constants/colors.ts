@@ -1,45 +1,52 @@
 const colors = {
   light: {
-    text: "#1A0E1F",
-    tint: "#E5145E",
+    text: "#1A1A1A",
+    tint: "#5C2DA0",
 
-    background: "#FFF7EE",
-    foreground: "#1A0E1F",
+    // ShareChat: pure white canvas, not cream
+    background: "#FFFFFF",
+    foreground: "#1A1A1A",
 
     card: "#FFFFFF",
-    cardForeground: "#1A0E1F",
+    cardForeground: "#1A1A1A",
 
-    primary: "#E5145E",
+    // ShareChat signature deep purple
+    primary: "#5C2DA0",
     primaryForeground: "#FFFFFF",
 
-    secondary: "#FFE6D5",
-    secondaryForeground: "#7A2A0F",
+    // Soft purple tint for secondary surfaces
+    secondary: "#F0EAF9",
+    secondaryForeground: "#5C2DA0",
 
-    muted: "#F5E9DA",
-    mutedForeground: "#7A6A5C",
+    // Light grey neutrals
+    muted: "#F5F5F5",
+    mutedForeground: "#888888",
 
-    accent: "#FF6F2C",
-    accentForeground: "#FFFFFF",
+    // ShareChat uses gold/amber for premium highlights
+    accent: "#F5B000",
+    accentForeground: "#1A1A1A",
 
-    destructive: "#D11A2A",
+    destructive: "#D32F2F",
     destructiveForeground: "#FFFFFF",
 
-    border: "#EFE3D2",
-    input: "#EFE3D2",
+    border: "#EBEBEB",
+    input: "#EBEBEB",
 
-    hot: "#E5145E",
-    warm: "#FF6F2C",
-    cool: "#FFB627",
+    // Heat bar gradient — purple → amber → gold
+    hot: "#E91E63",
+    warm: "#FF9800",
+    cool: "#5C2DA0",
 
-    catSports: "#1F8A4C",
-    catNews: "#2952CC",
-    catEntertainment: "#9B1B6B",
-    catFestival: "#E5145E",
-    catFinance: "#0F6E4F",
-    catTech: "#5B2C8A",
-    catWeather: "#0E7C9C",
-    catPolitics: "#7A4A1B",
-    catViral: "#FF6F2C",
+    // Category pill colours — muted and professional
+    catSports: "#1B7F3C",
+    catNews: "#1565C0",
+    catEntertainment: "#AD1457",
+    catFestival: "#E65100",
+    catFinance: "#00695C",
+    catTech: "#5C2DA0",
+    catWeather: "#0277BD",
+    catPolitics: "#6D4C41",
+    catViral: "#C62828",
   },
 
   radius: 16,

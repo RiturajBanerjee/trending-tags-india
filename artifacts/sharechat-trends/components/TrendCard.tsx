@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: "#CFC2B0",
+    backgroundColor: "#CCCCCC",
   },
   heatRow: {
     flexDirection: "row",
