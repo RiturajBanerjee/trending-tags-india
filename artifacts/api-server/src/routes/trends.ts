@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { computeHeatScore, computeMomentum, type ScoringInput } from "../utils/trendScoring.js";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
@@ -34,6 +35,22 @@ const CATEGORY_LABELS: Record<string, string> = {
   politics:      "राजनीति",
   viral:         "वायरल",
 };
+
+// Hindi words that appear in category labels — used to detect compound/mashup tags
+const CATEGORY_HINDI_WORDS = ["खेल", "समाचार", "मनोरंजन", "त्योहार", "वित्त", "तकनीक", "मौसम", "राजनीति", "वायरल", "खबर"];
+
+/** Returns true if the tag appears to be a concatenation of two category label words */
+function isMashupTag(tag: string): boolean {
+  const bare = tag.replace(/^#/, "");
+  let hits = 0;
+  for (const word of CATEGORY_HINDI_WORDS) {
+    if (bare.includes(word)) {
+      hits++;
+      if (hits >= 2) return true;
+    }
+  }
+  return false;
+}
 
 // ── AI cluster — only language-understanding fields (9 fields) ────────────────
 // id, categoryLabelHi, sources, primarySource, heat, momentum, rank
@@ -172,6 +189,10 @@ STRICT RULES:
 - sourceHeadlines must be VERBATIM copies of input headline text — never paraphrase or rewrite
 - headlineCount must equal the actual number of headlines you clustered (not just sourceHeadlines.length)
 - Do NOT include heat, rank, momentum, engagement metrics, or invented data of any kind
+- Each cluster must cover ONE specific topic or event — never merge two unrelated topics into one cluster
+- The tag must describe the SPECIFIC EVENT or PERSON, not the category. WRONG: #मनोरंजनखेल #न्यूजखेल #खेलसमाचार. RIGHT: #IPL2025 #विराटकोहली #बजट2025
+- NEVER concatenate two category words (sports, news, entertainment, politics, etc.) to form a tag
+- If sports and entertainment headlines cover different events, create SEPARATE clusters for each
 
 Output ONLY a valid JSON array of 15 objects. No markdown, no explanation, no extra text.
 
@@ -210,7 +231,14 @@ ${numberedHeadlines}
   // Derive id, categoryLabelHi, sources, primarySource from factual signals.
   // Compute heat and momentum deterministically via trendScoring.ts.
   const enriched = clusters
-    .filter((c) => Array.isArray(c.sourceHeadlines) && c.sourceHeadlines.length > 0 && c.headlineCount > 0)
+    .filter((c) => {
+      if (!Array.isArray(c.sourceHeadlines) || c.sourceHeadlines.length === 0 || c.headlineCount <= 0) return false;
+      if (isMashupTag(c.tag ?? "")) {
+        logger.warn({ tag: c.tag }, "Dropping cluster with mashup tag");
+        return false;
+      }
+      return true;
+    })
     .map((c, i) => {
       // Strip "[Source] (date) " prefix AI copies verbatim — do this first so
       // deriveSources and computeStartedHoursAgo both work on clean title text
