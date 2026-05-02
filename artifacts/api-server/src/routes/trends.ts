@@ -1,53 +1,14 @@
 import { Router } from "express";
-import fs from "fs";
-import path from "path";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { computeHeatScore, computeMomentum, type ScoringInput } from "../utils/trendScoring.js";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-// ── Cache config ──────────────────────────────────────────────────────────────
+// ── In-memory cache (30 minutes) ──────────────────────────────────────────────
 const CACHE_DURATION_MS = 30 * 60 * 1000;
-
-// In-memory cache (shared across all requests in one server process)
 let cachedResult: unknown = null;
 let cachedAt: Date | null = null;
-
-// Disk cache — survives server restarts so all users see the same tags
-// across a 30-min window even if the process bounces.
-const DISK_CACHE_PATH = path.join("/tmp", "trends_cache.json");
-
-function loadDiskCache(): boolean {
-  try {
-    if (!fs.existsSync(DISK_CACHE_PATH)) return false;
-    const raw = fs.readFileSync(DISK_CACHE_PATH, "utf-8");
-    const parsed = JSON.parse(raw) as { _savedAt: string; result: unknown };
-    const savedAt = new Date(parsed._savedAt);
-    if (Date.now() - savedAt.getTime() >= CACHE_DURATION_MS) return false;
-    cachedResult = parsed.result;
-    cachedAt = savedAt;
-    logger.info("Loaded trends cache from disk");
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function saveDiskCache(result: unknown): void {
-  try {
-    fs.writeFileSync(
-      DISK_CACHE_PATH,
-      JSON.stringify({ _savedAt: new Date().toISOString(), result }),
-      "utf-8",
-    );
-  } catch (err) {
-    logger.warn({ err }, "Failed to write disk cache");
-  }
-}
-
-// Warm the in-memory cache from disk on startup
-loadDiskCache();
 
 // ── In-flight deduplication ────────────────────────────────────────────────────
 // If multiple requests arrive while the AI call is running, they all share
@@ -243,16 +204,11 @@ ${numberedHeadlines}
   // We do NOT set max_completion_tokens: gpt-5-mini is a reasoning model that
   // uses internal thinking tokens. Capping output tokens causes it to exhaust
   // its budget on reasoning and return empty content. Let the model self-manage.
-  // temperature: 0 makes clustering deterministic — same headlines → same tags.
-  // seed pins the random state as an additional guarantee (supported by most
-  // OpenAI-compatible endpoints; silently ignored if not supported).
   const stream = await openai.chat.completions.create({
     model: "gpt-5-mini",
     messages: [{ role: "user", content: prompt }],
     stream: true,
-    temperature: 0,
-    seed: 42,
-  } as Parameters<typeof openai.chat.completions.create>[0]);
+  });
 
   let rawContent = "";
   let finishReason: string | null = null;
@@ -338,7 +294,6 @@ ${numberedHeadlines}
 
   cachedResult = result;
   cachedAt = now;
-  saveDiskCache(result);
 
   return result;
 }
