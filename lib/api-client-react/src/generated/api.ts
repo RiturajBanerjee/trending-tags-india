@@ -13,7 +13,11 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  HealthStatus,
+  TrendsResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType } from "../custom-fetch";
@@ -92,6 +96,74 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns a ranked list of trending topics for India, in Hindi. Results are cached for 30 minutes.
+ * @summary Get trending tags
+ */
+export const getGetTrendsUrl = () => {
+  return `/api/trends`;
+};
+
+export const getTrends = async (
+  options?: RequestInit,
+): Promise<TrendsResponse> => {
+  return customFetch<TrendsResponse>(getGetTrendsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTrendsQueryKey = () => {
+  return [`/api/trends`] as const;
+};
+
+export const getGetTrendsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTrends>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getTrends>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTrendsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrends>>> = ({
+    signal,
+  }) => getTrends({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTrends>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTrendsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTrends>>
+>;
+export type GetTrendsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get trending tags
+ */
+
+export function useGetTrends<
+  TData = Awaited<ReturnType<typeof getTrends>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getTrends>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTrendsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

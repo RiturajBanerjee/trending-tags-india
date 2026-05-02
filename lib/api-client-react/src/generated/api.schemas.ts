@@ -8,3 +8,82 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export type TrendMomentum = (typeof TrendMomentum)[keyof typeof TrendMomentum];
+
+export const TrendMomentum = {
+  rising: "rising",
+  peaking: "peaking",
+  cooling: "cooling",
+} as const;
+
+export type TrendCategory = (typeof TrendCategory)[keyof typeof TrendCategory];
+
+export const TrendCategory = {
+  sports: "sports",
+  news: "news",
+  entertainment: "entertainment",
+  festival: "festival",
+  finance: "finance",
+  tech: "tech",
+  weather: "weather",
+  politics: "politics",
+  viral: "viral",
+} as const;
+
+export type TrendSource = (typeof TrendSource)[keyof typeof TrendSource];
+
+export const TrendSource = {
+  search: "search",
+  social: "social",
+  news: "news",
+  video: "video",
+  "cross-platform": "cross-platform",
+} as const;
+
+export interface RelatedPost {
+  author: string;
+  handle: string;
+  language: string;
+  text: string;
+  likes: number;
+  shares: number;
+}
+
+export interface TrendItem {
+  id: string;
+  rank: number;
+  /** Hindi hashtag e.g. */
+  tag: string;
+  /** Short Hindi title */
+  titleHi: string;
+  /** One-line Hindi description */
+  descriptionHi: string;
+  category: TrendCategory;
+  categoryLabelHi: string;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  heat: number;
+  postsCount: number;
+  viewsCount: number;
+  sources: TrendSource[];
+  primarySource: TrendSource;
+  region: string;
+  startedHoursAgo: number;
+  momentum: TrendMomentum;
+  topLanguages: string[];
+  relatedPosts: RelatedPost[];
+}
+
+export interface TrendsResponse {
+  trends: TrendItem[];
+  fetchedAt: string;
+  cachedUntil: string;
+  headlinesUsed: number;
+}

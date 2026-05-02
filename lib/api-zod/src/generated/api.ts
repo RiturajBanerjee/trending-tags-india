@@ -14,3 +14,67 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns a ranked list of trending topics for India, in Hindi. Results are cached for 30 minutes.
+ * @summary Get trending tags
+ */
+export const getTrendsResponseTrendsItemHeatMin = 0;
+export const getTrendsResponseTrendsItemHeatMax = 100;
+
+export const GetTrendsResponse = zod.object({
+  trends: zod.array(
+    zod.object({
+      id: zod.string(),
+      rank: zod.number(),
+      tag: zod.string().describe("Hindi hashtag e.g."),
+      titleHi: zod.string().describe("Short Hindi title"),
+      descriptionHi: zod.string().describe("One-line Hindi description"),
+      category: zod.enum([
+        "sports",
+        "news",
+        "entertainment",
+        "festival",
+        "finance",
+        "tech",
+        "weather",
+        "politics",
+        "viral",
+      ]),
+      categoryLabelHi: zod.string(),
+      heat: zod
+        .number()
+        .min(getTrendsResponseTrendsItemHeatMin)
+        .max(getTrendsResponseTrendsItemHeatMax),
+      postsCount: zod.number(),
+      viewsCount: zod.number(),
+      sources: zod.array(
+        zod.enum(["search", "social", "news", "video", "cross-platform"]),
+      ),
+      primarySource: zod.enum([
+        "search",
+        "social",
+        "news",
+        "video",
+        "cross-platform",
+      ]),
+      region: zod.string(),
+      startedHoursAgo: zod.number(),
+      momentum: zod.enum(["rising", "peaking", "cooling"]),
+      topLanguages: zod.array(zod.string()),
+      relatedPosts: zod.array(
+        zod.object({
+          author: zod.string(),
+          handle: zod.string(),
+          language: zod.string(),
+          text: zod.string(),
+          likes: zod.number(),
+          shares: zod.number(),
+        }),
+      ),
+    }),
+  ),
+  fetchedAt: zod.coerce.date(),
+  cachedUntil: zod.coerce.date(),
+  headlinesUsed: zod.number(),
+});

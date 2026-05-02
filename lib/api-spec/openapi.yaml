@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: trends
+    description: Trending tags operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /trends:
+    get:
+      operationId: getTrends
+      tags: [trends]
+      summary: Get trending tags
+      description: Returns a ranked list of trending topics for India, in Hindi. Results are cached for 30 minutes.
+      responses:
+        "200":
+          description: Trending tags list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrendsResponse"
+        "500":
+          description: Failed to fetch trends
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +54,127 @@ components:
           type: string
       required:
         - status
-
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    TrendMomentum:
+      type: string
+      enum: [rising, peaking, cooling]
+    TrendCategory:
+      type: string
+      enum: [sports, news, entertainment, festival, finance, tech, weather, politics, viral]
+    TrendSource:
+      type: string
+      enum: [search, social, news, video, cross-platform]
+    TrendItem:
+      type: object
+      properties:
+        id:
+          type: string
+        rank:
+          type: integer
+        tag:
+          type: string
+          description: Hindi hashtag e.g. #भारतVsऑस्ट्रेलिया
+        titleHi:
+          type: string
+          description: Short Hindi title
+        descriptionHi:
+          type: string
+          description: One-line Hindi description
+        category:
+          $ref: "#/components/schemas/TrendCategory"
+        categoryLabelHi:
+          type: string
+        heat:
+          type: integer
+          minimum: 0
+          maximum: 100
+        postsCount:
+          type: integer
+        viewsCount:
+          type: integer
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendSource"
+        primarySource:
+          $ref: "#/components/schemas/TrendSource"
+        region:
+          type: string
+        startedHoursAgo:
+          type: integer
+        momentum:
+          $ref: "#/components/schemas/TrendMomentum"
+        topLanguages:
+          type: array
+          items:
+            type: string
+        relatedPosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/RelatedPost"
+      required:
+        - id
+        - rank
+        - tag
+        - titleHi
+        - descriptionHi
+        - category
+        - categoryLabelHi
+        - heat
+        - postsCount
+        - viewsCount
+        - sources
+        - primarySource
+        - region
+        - startedHoursAgo
+        - momentum
+        - topLanguages
+        - relatedPosts
+    RelatedPost:
+      type: object
+      properties:
+        author:
+          type: string
+        handle:
+          type: string
+        language:
+          type: string
+        text:
+          type: string
+        likes:
+          type: integer
+        shares:
+          type: integer
+      required:
+        - author
+        - handle
+        - language
+        - text
+        - likes
+        - shares
+    TrendsResponse:
+      type: object
+      properties:
+        trends:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendItem"
+        fetchedAt:
+          type: string
+          format: date-time
+        cachedUntil:
+          type: string
+          format: date-time
+        headlinesUsed:
+          type: integer
+      required:
+        - trends
+        - fetchedAt
+        - cachedUntil
+        - headlinesUsed
