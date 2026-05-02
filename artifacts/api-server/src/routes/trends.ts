@@ -46,7 +46,6 @@ interface AiCluster {
   headlineCount:   number;
   sourceHeadlines: string[];
   region:          string;
-  startedHoursAgo: number;
   topLanguages:    string[];
 }
 
@@ -69,6 +68,11 @@ interface RssItem {
   pubDate: string | null;
 }
 
+// ── Strip CDATA wrapper if present ────────────────────────────────────────────
+function stripCdata(raw: string): string {
+  return raw.replace(/^<!\[CDATA\[/, "").replace(/\]\]>$/, "").trim();
+}
+
 // ── Tiny XML parser ───────────────────────────────────────────────────────────
 function extractItems(xml: string, source: string): RssItem[] {
   const itemBlocks = xml.split(/<item[\s>]/i).slice(1);
@@ -77,12 +81,31 @@ function extractItems(xml: string, source: string): RssItem[] {
     const titleMatch =
       block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i) ??
       block.match(/<title>([\s\S]*?)<\/title>/i);
-    const pubDateMatch = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+    const pubDateRaw = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
     const title = (titleMatch?.[1] ?? "").trim();
     if (title.length < 10) continue;
-    results.push({ title, source, pubDate: pubDateMatch ? pubDateMatch[1].trim() : null });
+    // Always strip CDATA from pubDate — some feeds (e.g. NDTV) wrap it
+    const pubDate = pubDateRaw ? stripCdata(pubDateRaw[1].trim()) : null;
+    results.push({ title, source, pubDate });
   }
   return results.slice(0, 20); // 20 per feed × 4 feeds = up to 80 headlines
+}
+
+// ── Server-side startedHoursAgo: match sourceHeadlines → pubDates ─────────────
+// After AI returns verbatim sourceHeadlines, find them in allItems to get
+// actual pubDates. The cluster's age = hours since the EARLIEST headline in it.
+// This replaces the AI-estimated startedHoursAgo entirely.
+function computeStartedHoursAgo(sourceHeadlines: string[], allItems: RssItem[]): number {
+  const now = Date.now();
+  const ages: number[] = [];
+  for (const headline of sourceHeadlines) {
+    const item = allItems.find((it) => it.title === headline || it.title.includes(headline.slice(0, 30)));
+    if (!item?.pubDate) continue;
+    const ts = Date.parse(item.pubDate);
+    if (!isNaN(ts)) ages.push((now - ts) / 3_600_000);
+  }
+  if (ages.length === 0) return 12; // fallback if no dates matched
+  return Math.max(1, Math.round(Math.min(...ages))); // earliest headline = trend start
 }
 
 // ── Fetch one RSS feed safely ──────────────────────────────────────────────────
@@ -90,7 +113,7 @@ async function fetchFeed(url: string, source: string): Promise<RssItem[]> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(6000),
-      headers: { "User-Agent": "ShareChatTrendBot/1.0" },
+      headers: { "User-Agent": "TrendBot/1.0" },
     });
     if (!res.ok) return [];
     return extractItems(await res.text(), source);
@@ -143,7 +166,6 @@ For each cluster output a JSON object with EXACTLY these keys:
 - headlineCount: exact integer — count of headlines from the list clustered here
 - sourceHeadlines: array of 2–3 VERBATIM headline titles from the input (exact copies only)
 - region: most relevant Indian region in Hindi (e.g. "अखिल भारत", "मुंबई")
-- startedHoursAgo: integer 1–72, estimated from pubDates and headline framing
 - topLanguages: array of 1–2 Indian language names in Hindi (e.g. ["हिन्दी"])
 
 STRICT RULES:
@@ -190,12 +212,19 @@ ${numberedHeadlines}
   const enriched = clusters
     .filter((c) => Array.isArray(c.sourceHeadlines) && c.sourceHeadlines.length > 0 && c.headlineCount > 0)
     .map((c, i) => {
-      const sources = deriveSources(c.sourceHeadlines);
+      // Strip "[Source] (date) " prefix AI copies verbatim — do this first so
+      // deriveSources and computeStartedHoursAgo both work on clean title text
+      const cleanHeadlines = c.sourceHeadlines.map((h) =>
+        h.replace(/^\[\w[^\]]*\]\s*(\([^)]*\)\s*)?/, "").trim()
+      );
+      const sources = deriveSources(cleanHeadlines);
+      // Compute startedHoursAgo from actual RSS pubDates by matching clean titles
+      const startedHoursAgo = computeStartedHoursAgo(cleanHeadlines, allItems);
       const scoringInput: ScoringInput = {
         headlineCount:   c.headlineCount,
         sources,
-        startedHoursAgo: c.startedHoursAgo,
-        sourceHeadlines: c.sourceHeadlines,
+        startedHoursAgo,
+        sourceHeadlines: cleanHeadlines,
       };
       return {
         // Language fields from AI ────────────────────────────────────────────
@@ -204,9 +233,9 @@ ${numberedHeadlines}
         descriptionHi:   c.descriptionHi,
         category:        c.category,
         region:          c.region,
-        startedHoursAgo: c.startedHoursAgo,
+        startedHoursAgo,
         topLanguages:    Array.isArray(c.topLanguages) ? c.topLanguages : [],
-        sourceHeadlines: c.sourceHeadlines,
+        sourceHeadlines: cleanHeadlines,
         headlineCount:   c.headlineCount,
         // Derived server-side — no AI ────────────────────────────────────────
         id:              `trend-${i + 1}`,

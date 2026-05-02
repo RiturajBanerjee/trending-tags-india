@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ShareChat Trends",
+    "name": "Trends",
     "slug": "sharechat-trends",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sharechat-trends",
+    "scheme": "trends-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {

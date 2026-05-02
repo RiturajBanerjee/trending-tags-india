@@ -51,7 +51,7 @@ export default function TrendDetail() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const bottomInset = Platform.OS === "web" ? insets.bottom + 110 : insets.bottom + 90;
+  const bottomInset = Platform.OS === "web" ? insets.bottom + 32 : insets.bottom + 24;
   const topInset = Platform.OS === "web" ? Math.max(insets.top, 12) : insets.top;
 
   if (isLoading && !trend) {
@@ -146,7 +146,7 @@ export default function TrendDetail() {
                 <Text style={[styles.statBig, { color: colors.foreground }]}>{trend.heat}</Text>
                 <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>हीट स्कोर</Text>
                 <View style={styles.statNote}>
-                  <Text style={[styles.statNoteText, { color: colors.mutedForeground }]}>AI रैंकिंग</Text>
+                  <Text style={[styles.statNoteText, { color: colors.mutedForeground }]}>फ़ॉर्मूला</Text>
                 </View>
                 <View style={{ marginTop: 6 }}><HeatBar heat={trend.heat} width={60} /></View>
               </View>
@@ -163,7 +163,7 @@ export default function TrendDetail() {
                 <Text style={[styles.statBig, { color: colors.foreground }]}>{trend.startedHoursAgo}h</Text>
                 <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>पहले</Text>
                 <View style={styles.statNote}>
-                  <Text style={[styles.statNoteText, { color: colors.mutedForeground }]}>AI अनुमान</Text>
+                  <Text style={[styles.statNoteText, { color: colors.mutedForeground }]}>RSS तिथि</Text>
                 </View>
               </View>
             </View>
@@ -172,7 +172,7 @@ export default function TrendDetail() {
             <View style={[styles.infoBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
               <Feather name="info" size={12} color={colors.mutedForeground} />
               <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-                हीट स्कोर और समय AI का अनुमान है — RSS खबरों की संख्या, विविधता और प्रमुखता से तय होता है। पोस्ट/व्यू काउंट ShareChat के आंतरिक डेटा से नहीं मिल सकते।
+                हीट स्कोर RSS खबरों की संख्या, विविधता और प्रमुखता से तय होता है।
               </Text>
             </View>
 
@@ -219,17 +219,8 @@ export default function TrendDetail() {
           {/* Real headlines — verbatim from RSS */}
           {trend.sourceHeadlines.length > 0 && (
             <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={[styles.sectionLabel, { color: colors.foreground }]}>
-                  वे खबरें जिनसे यह ट्रेंड बना
-                </Text>
-                <View style={[styles.realBadge, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}>
-                  <Feather name="rss" size={10} color={colors.primary} />
-                  <Text style={[styles.realBadgeText, { color: colors.primary }]}>असली</Text>
-                </View>
-              </View>
-              <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-                ये RSS फ़ीड से ली गई असली हेडलाइन हैं — AI ने नहीं बनाई
+              <Text style={[styles.sectionLabel, { color: colors.foreground }]}>
+                वे खबरें जिनसे यह ट्रेंड बना
               </Text>
               <View style={{ gap: 8 }}>
                 {trend.sourceHeadlines.map((headline, idx) => (
@@ -296,28 +287,6 @@ export default function TrendDetail() {
         </View>
       </ScrollView>
 
-      {/* Sticky action bar */}
-      <View
-        style={[
-          styles.actionBar,
-          {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-            paddingBottom: insets.bottom + 12,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={onShare}
-          style={({ pressed }) => [
-            styles.shareBtn,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
-          ]}
-        >
-          <Feather name="share-2" size={16} color="#FFFFFF" />
-          <Text style={styles.shareBtnText}>शेयर करें</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
