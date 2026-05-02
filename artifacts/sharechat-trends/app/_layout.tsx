@@ -30,7 +30,12 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30 * 60 * 1000, // 30 min — matches backend cache
-      retry: 2,
+      // Do not auto-retry on failure — the AI call takes 60–90s and retrying
+      // immediately just floods the server before the first call can finish.
+      // The user can pull-to-refresh manually once the cache is warm.
+      retry: false,
+      // Do not refetch when the window regains focus — cache is 30 min anyway.
+      refetchOnWindowFocus: false,
     },
   },
 });
