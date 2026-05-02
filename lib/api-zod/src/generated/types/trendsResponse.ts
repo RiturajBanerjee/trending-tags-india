@@ -9,7 +9,10 @@ import type { TrendItem } from "./trendItem";
 
 export interface TrendsResponse {
   trends: TrendItem[];
+  /** UTC timestamp when RSS feeds were fetched */
   fetchedAt: Date;
+  /** UTC timestamp when this result expires and a fresh fetch will occur */
   cachedUntil: Date;
+  /** Total number of RSS headlines processed in this request */
   headlinesUsed: number;
 }

@@ -105,7 +105,8 @@ export function useHealthCheck<
 }
 
 /**
- * Returns a ranked list of trending topics for India, in Hindi. Results are cached for 30 minutes.
+ * Returns a ranked list of trending topics for India, in Hindi. All fields are derived from real RSS headlines — no simulated counts or fake posts. Results are cached for 30 minutes.
+
  * @summary Get trending tags
  */
 export const getGetTrendsUrl = () => {

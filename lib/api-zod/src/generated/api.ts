@@ -16,7 +16,8 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * Returns a ranked list of trending topics for India, in Hindi. Results are cached for 30 minutes.
+ * Returns a ranked list of trending topics for India, in Hindi. All fields are derived from real RSS headlines — no simulated counts or fake posts. Results are cached for 30 minutes.
+
  * @summary Get trending tags
  */
 export const getTrendsResponseTrendsItemHeatMin = 0;
@@ -25,11 +26,17 @@ export const getTrendsResponseTrendsItemHeatMax = 100;
 export const GetTrendsResponse = zod.object({
   trends: zod.array(
     zod.object({
-      id: zod.string(),
-      rank: zod.number(),
+      id: zod.string().describe("Kebab-case slug identifier"),
+      rank: zod.number().describe("Rank among today's trends, 1 = hottest"),
       tag: zod.string().describe("Hindi hashtag e.g."),
-      titleHi: zod.string().describe("Short Hindi title"),
-      descriptionHi: zod.string().describe("One-line Hindi description"),
+      titleHi: zod
+        .string()
+        .describe("Short Hindi title (5–8 words, Devanagari)"),
+      descriptionHi: zod
+        .string()
+        .describe(
+          "One-line Hindi description of why it is trending (Devanagari, max 25 words)",
+        ),
       category: zod.enum([
         "sports",
         "news",
@@ -41,40 +48,63 @@ export const GetTrendsResponse = zod.object({
         "politics",
         "viral",
       ]),
-      categoryLabelHi: zod.string(),
+      categoryLabelHi: zod.string().describe("Hindi label for the category"),
       heat: zod
         .number()
         .min(getTrendsResponseTrendsItemHeatMin)
-        .max(getTrendsResponseTrendsItemHeatMax),
-      postsCount: zod.number(),
-      viewsCount: zod.number(),
-      sources: zod.array(
-        zod.enum(["search", "social", "news", "video", "cross-platform"]),
-      ),
-      primarySource: zod.enum([
-        "search",
-        "social",
-        "news",
-        "video",
-        "cross-platform",
-      ]),
-      region: zod.string(),
-      startedHoursAgo: zod.number(),
-      momentum: zod.enum(["rising", "peaking", "cooling"]),
-      topLanguages: zod.array(zod.string()),
-      relatedPosts: zod.array(
-        zod.object({
-          author: zod.string(),
-          handle: zod.string(),
-          language: zod.string(),
-          text: zod.string(),
-          likes: zod.number(),
-          shares: zod.number(),
-        }),
-      ),
+        .max(getTrendsResponseTrendsItemHeatMax)
+        .describe(
+          "AI-assessed trending intensity (0–100) based on: headline volume across sources, source diversity, and editorial prominence. This is NOT a real-time platform metric — it is a relative ranking signal derived from the RSS headlines fetched at request time.\n",
+        ),
+      headlineCount: zod
+        .number()
+        .describe(
+          "Number of RSS headlines fetched that were clustered into this trend",
+        ),
+      sources: zod
+        .array(
+          zod.enum(["search", "social", "news", "video", "cross-platform"]),
+        )
+        .describe("Which signal channels this trend was detected across"),
+      primarySource: zod
+        .enum(["search", "social", "news", "video", "cross-platform"])
+        .describe("The dominant signal channel for this trend"),
+      region: zod
+        .string()
+        .describe(
+          'Most relevant Indian region in Hindi (e.g. \"अखिल भारत\", \"मुंबई\")',
+        ),
+      startedHoursAgo: zod
+        .number()
+        .describe(
+          "AI estimate of how many hours ago this topic began trending, inferred from headline timestamps and phrasing. Not sourced from any platform API.\n",
+        ),
+      momentum: zod
+        .enum(["rising", "peaking", "cooling"])
+        .describe(
+          "AI assessment of trend trajectory — rising (gaining coverage), peaking (maximum coverage now), cooling (coverage declining).\n",
+        ),
+      topLanguages: zod
+        .array(zod.string())
+        .describe(
+          "Indian languages this topic is most discussed in (Hindi names)",
+        ),
+      sourceHeadlines: zod
+        .array(zod.string())
+        .describe(
+          "The actual RSS headline texts that were clustered into this trend. These are real, verbatim strings from the news feeds — not generated.\n",
+        ),
     }),
   ),
-  fetchedAt: zod.coerce.date(),
-  cachedUntil: zod.coerce.date(),
-  headlinesUsed: zod.number(),
+  fetchedAt: zod.coerce
+    .date()
+    .describe("UTC timestamp when RSS feeds were fetched"),
+  cachedUntil: zod.coerce
+    .date()
+    .describe(
+      "UTC timestamp when this result expires and a fresh fetch will occur",
+    ),
+  headlinesUsed: zod
+    .number()
+    .describe("Total number of RSS headlines processed in this request"),
 });

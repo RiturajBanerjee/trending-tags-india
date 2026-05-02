@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import { CategoryChip } from "@/components/CategoryChip";
-import { formatCount, type Trend } from "@/data/trends";
+import { type Trend } from "@/data/trends";
 import { useColors } from "@/hooks/useColors";
 
 type Props = {
@@ -32,15 +32,10 @@ export function HotTrendHero({ trend }: Props) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.hero,
-        {
-          backgroundColor: colors.primary,
-          opacity: pressed ? 0.9 : 1,
-        },
+        { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
       ]}
     >
-      {/* Purple-to-violet radial glow top-right */}
       <View style={styles.glow} />
-      {/* Soft lavender glow bottom-left */}
       <View style={styles.glow2} />
 
       <View style={styles.topRow}>
@@ -61,6 +56,7 @@ export function HotTrendHero({ trend }: Props) {
         {trend.descriptionHi}
       </Text>
 
+      {/* Real stats: heat score + headline count from RSS */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{trend.heat}</Text>
@@ -68,13 +64,13 @@ export function HotTrendHero({ trend }: Props) {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatCount(trend.postsCount)}</Text>
-          <Text style={styles.statLabel}>पोस्ट</Text>
+          <Text style={styles.statValue}>{trend.headlineCount}</Text>
+          <Text style={styles.statLabel}>न्यूज़ सोर्स</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatCount(trend.viewsCount)}</Text>
-          <Text style={styles.statLabel}>व्यू</Text>
+          <Text style={styles.statValue}>{trend.startedHoursAgo}h</Text>
+          <Text style={styles.statLabel}>पहले शुरू</Text>
         </View>
       </View>
 
@@ -92,7 +88,6 @@ const styles = StyleSheet.create({
     padding: 20,
     overflow: "hidden",
   },
-  // Deep indigo glow — top-right
   glow: {
     position: "absolute",
     top: -70,
@@ -103,7 +98,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#7B3FC4",
     opacity: 0.6,
   },
-  // Soft lavender glow — bottom-left
   glow2: {
     position: "absolute",
     bottom: -80,
@@ -161,15 +155,8 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 16,
   },
-  stat: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "800",
-  },
+  stat: { flex: 1, alignItems: "center" },
+  statValue: { color: "#FFFFFF", fontSize: 18, fontWeight: "800" },
   statLabel: {
     color: "rgba(255,255,255,0.80)",
     fontSize: 10,
@@ -191,9 +178,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 14,
   },
-  ctaText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  ctaText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 });

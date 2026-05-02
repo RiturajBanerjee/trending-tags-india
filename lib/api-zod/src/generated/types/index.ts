@@ -8,7 +8,6 @@
 
 export * from "./errorResponse";
 export * from "./healthStatus";
-export * from "./relatedPost";
 export * from "./trendCategory";
 export * from "./trendItem";
 export * from "./trendMomentum";

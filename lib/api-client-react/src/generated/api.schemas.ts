@@ -45,45 +45,54 @@ export const TrendSource = {
   "cross-platform": "cross-platform",
 } as const;
 
-export interface RelatedPost {
-  author: string;
-  handle: string;
-  language: string;
-  text: string;
-  likes: number;
-  shares: number;
-}
-
 export interface TrendItem {
+  /** Kebab-case slug identifier */
   id: string;
+  /** Rank among today's trends, 1 = hottest */
   rank: number;
   /** Hindi hashtag e.g. */
   tag: string;
-  /** Short Hindi title */
+  /** Short Hindi title (5–8 words, Devanagari) */
   titleHi: string;
-  /** One-line Hindi description */
+  /** One-line Hindi description of why it is trending (Devanagari, max 25 words) */
   descriptionHi: string;
   category: TrendCategory;
+  /** Hindi label for the category */
   categoryLabelHi: string;
   /**
+   * AI-assessed trending intensity (0–100) based on: headline volume across sources, source diversity, and editorial prominence. This is NOT a real-time platform metric — it is a relative ranking signal derived from the RSS headlines fetched at request time.
+
    * @minimum 0
    * @maximum 100
    */
   heat: number;
-  postsCount: number;
-  viewsCount: number;
+  /** Number of RSS headlines fetched that were clustered into this trend */
+  headlineCount: number;
+  /** Which signal channels this trend was detected across */
   sources: TrendSource[];
+  /** The dominant signal channel for this trend */
   primarySource: TrendSource;
+  /** Most relevant Indian region in Hindi (e.g. "अखिल भारत", "मुंबई") */
   region: string;
+  /** AI estimate of how many hours ago this topic began trending, inferred from headline timestamps and phrasing. Not sourced from any platform API.
+   */
   startedHoursAgo: number;
+  /** AI assessment of trend trajectory — rising (gaining coverage), peaking (maximum coverage now), cooling (coverage declining).
+   */
   momentum: TrendMomentum;
+  /** Indian languages this topic is most discussed in (Hindi names) */
   topLanguages: string[];
-  relatedPosts: RelatedPost[];
+  /** The actual RSS headline texts that were clustered into this trend. These are real, verbatim strings from the news feeds — not generated.
+   */
+  sourceHeadlines: string[];
 }
 
 export interface TrendsResponse {
   trends: TrendItem[];
+  /** UTC timestamp when RSS feeds were fetched */
   fetchedAt: string;
+  /** UTC timestamp when this result expires and a fresh fetch will occur */
   cachedUntil: string;
+  /** Total number of RSS headlines processed in this request */
   headlinesUsed: number;
 }
