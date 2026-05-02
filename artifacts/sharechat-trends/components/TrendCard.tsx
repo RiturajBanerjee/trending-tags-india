@@ -13,7 +13,6 @@ import { CategoryChip } from "@/components/CategoryChip";
 import { HeatBar } from "@/components/HeatBar";
 import {
   momentumLabelsHi,
-  sourceLabelsHi,
   type Trend,
 } from "@/data/trends";
 import { useColors } from "@/hooks/useColors";
@@ -50,67 +49,61 @@ export function TrendCard({ trend }: Props) {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          opacity: pressed ? 0.85 : 1,
+          opacity: pressed ? 0.88 : 1,
           transform: [{ scale: pressed ? 0.99 : 1 }],
         },
       ]}
     >
-      <View style={styles.row}>
-        <View style={[styles.rankBubble, { backgroundColor: colors.primary + "12" }]}>
-          <Text style={[styles.rankText, { color: colors.primary }]}>
-            {trend.rank}
+      {/* ── Tag banner — the star of the show ── */}
+      <View style={[styles.tagBanner, { backgroundColor: colors.primary + "10" }]}>
+        <View style={styles.tagBannerInner}>
+          <Text style={[styles.tagBig, { color: colors.primary }]} numberOfLines={1}>
+            {trend.tag}
           </Text>
+          <View style={styles.momentumRow}>
+            <Feather name={momentumIcon} size={12} color={momentumColor} />
+            <Text style={[styles.momentumText, { color: momentumColor }]}>
+              {momentumLabelsHi[trend.momentum]}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Card body ── */}
+      <View style={styles.body}>
+        <View style={styles.topRow}>
+          <View style={[styles.rankBubble, { backgroundColor: colors.primary + "12" }]}>
+            <Text style={[styles.rankText, { color: colors.primary }]}>
+              {trend.rank}
+            </Text>
+          </View>
+          <CategoryChip category={trend.category} labelHi={trend.categoryLabelHi} />
         </View>
 
-        <View style={styles.body}>
-          <View style={styles.headerRow}>
-            <CategoryChip category={trend.category} labelHi={trend.categoryLabelHi} />
-            <View style={styles.momentumRow}>
-              <Feather name={momentumIcon} size={12} color={momentumColor} />
-              <Text style={[styles.momentumText, { color: momentumColor }]}>
-                {momentumLabelsHi[trend.momentum]}
-              </Text>
-            </View>
-          </View>
+        <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
+          {trend.titleHi}
+        </Text>
+        <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {trend.descriptionHi}
+        </Text>
 
-          <Text style={[styles.title, { color: colors.foreground }]}>
-            {trend.titleHi}
-          </Text>
-          <Text style={[styles.tag, { color: colors.primary }]}>{trend.tag}</Text>
-          <Text
-            style={[styles.desc, { color: colors.mutedForeground }]}
-            numberOfLines={2}
-          >
-            {trend.descriptionHi}
-          </Text>
-
-          {/* Real metric: headline count from RSS feeds */}
-          <View style={styles.meta}>
-            <View style={styles.metaItem}>
-              <Feather name="rss" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-                {trend.headlineCount} खबरें
-              </Text>
-            </View>
-            <View style={styles.metaDot} />
-            <View style={styles.metaItem}>
-              <Feather name="map-pin" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-                {trend.region}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.heatRow}>
-            <HeatBar heat={trend.heat} />
-            <Text style={[styles.heatText, { color: colors.foreground }]}>
-              {trend.heat}
-            </Text>
-            <View style={styles.spacer} />
-            <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
-              {sourceLabelsHi[trend.primarySource]}
+        <View style={styles.footer}>
+          <View style={styles.metaItem}>
+            <Feather name="rss" size={11} color={colors.mutedForeground} />
+            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+              {trend.headlineCount} खबरें
             </Text>
           </View>
+          <View style={styles.metaDot} />
+          <View style={styles.metaItem}>
+            <Feather name="map-pin" size={11} color={colors.mutedForeground} />
+            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+              {trend.region}
+            </Text>
+          </View>
+          <View style={styles.spacer} />
+          <HeatBar heat={trend.heat} width={48} />
+          <Text style={[styles.heatNum, { color: colors.foreground }]}>{trend.heat}</Text>
         </View>
       </View>
     </Pressable>
@@ -118,43 +111,50 @@ export function TrendCard({ trend }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 20, borderWidth: 1, padding: 14 },
-  row: { flexDirection: "row", gap: 12 },
+  card: { borderRadius: 20, borderWidth: 1, overflow: "hidden" },
+
+  tagBanner: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  tagBannerInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  tagBig: {
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  momentumRow: { flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 },
+  momentumText: { fontSize: 11, fontWeight: "700" },
+
+  body: { paddingHorizontal: 14, paddingBottom: 12, paddingTop: 8, gap: 5 },
+  topRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   rankBubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  rankText: { fontSize: 15, fontWeight: "800" },
-  body: { flex: 1, gap: 6 },
-  headerRow: {
+  rankText: { fontSize: 13, fontWeight: "800" },
+
+  title: { fontSize: 16, fontWeight: "700", lineHeight: 22 },
+  desc: { fontSize: 13, lineHeight: 18 },
+
+  footer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 6,
+    marginTop: 6,
   },
-  momentumRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  momentumText: { fontSize: 11, fontWeight: "700" },
-  title: { fontSize: 17, fontWeight: "700", marginTop: 2 },
-  tag: { fontSize: 13, fontWeight: "700", marginTop: -2 },
-  desc: { fontSize: 13, lineHeight: 19, marginTop: 2 },
-  meta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
   metaText: { fontSize: 11, fontWeight: "600" },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "#CCCCCC",
-  },
-  heatRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 8,
-  },
-  heatText: { fontSize: 12, fontWeight: "800" },
+  metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#CCCCCC" },
   spacer: { flex: 1 },
-  sourceText: { fontSize: 11, fontWeight: "600" },
+  heatNum: { fontSize: 12, fontWeight: "800" },
 });

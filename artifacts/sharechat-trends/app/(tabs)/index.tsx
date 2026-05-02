@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -20,7 +20,7 @@ import {
 } from "@/components/CategoryFilter";
 import { HotTrendHero } from "@/components/HotTrendHero";
 import { TrendCard } from "@/components/TrendCard";
-import type { Trend } from "@/data/trends";
+import type { Trend, TrendCategory } from "@/data/trends";
 import { useColors } from "@/hooks/useColors";
 
 function timeStringHi(date: Date): string {
@@ -49,6 +49,19 @@ export default function TrendingScreen() {
   const { data, isLoading, isError, refetch, isFetching } = useGetTrends();
 
   const allTrends: Trend[] = (data?.trends as Trend[] | undefined) ?? [];
+
+  // Which categories actually have trends right now
+  const availableCategories = useMemo(
+    () => new Set(allTrends.map((t) => t.category as TrendCategory)),
+    [allTrends],
+  );
+
+  // If the selected category disappeared from fresh data, reset to "all"
+  useEffect(() => {
+    if (filter !== "all" && !availableCategories.has(filter as TrendCategory)) {
+      setFilter("all");
+    }
+  }, [availableCategories, filter]);
 
   const filtered = useMemo(() => {
     const list =
@@ -177,7 +190,11 @@ export default function TrendingScreen() {
           },
         ]}
       >
-        <CategoryFilter value={filter} onChange={setFilter} />
+        <CategoryFilter
+          value={filter}
+          onChange={setFilter}
+          availableCategories={availableCategories}
+        />
       </View>
     </View>
   );

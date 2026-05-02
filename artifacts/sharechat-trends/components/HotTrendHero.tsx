@@ -50,9 +50,11 @@ export function HotTrendHero({ trend }: Props) {
         />
       </View>
 
-      <Text style={styles.title}>{trend.titleHi}</Text>
+      {/* ── Tag — the centrepiece ── */}
       <Text style={styles.tag}>{trend.tag}</Text>
-      <Text style={styles.desc} numberOfLines={3}>
+
+      <Text style={styles.title}>{trend.titleHi}</Text>
+      <Text style={styles.desc} numberOfLines={2}>
         {trend.descriptionHi}
       </Text>
 
@@ -128,24 +130,30 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.4,
   },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 26,
-    fontWeight: "800",
-    marginTop: 16,
-    lineHeight: 32,
-  },
+
+  /* Tag is now the hero's centrepiece — large, yellow, instantly readable */
   tag: {
     color: "#F5D679",
-    fontSize: 15,
+    fontSize: 32,
+    fontWeight: "800",
+    marginTop: 18,
+    letterSpacing: -0.5,
+    lineHeight: 38,
+  },
+
+  title: {
+    color: "#FFFFFF",
+    fontSize: 17,
     fontWeight: "700",
-    marginTop: 2,
+    marginTop: 6,
+    lineHeight: 24,
+    opacity: 0.95,
   },
   desc: {
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 10,
+    color: "rgba(255,255,255,0.80)",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
   },
   statsRow: {
     flexDirection: "row",
@@ -153,7 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.14)",
     borderRadius: 14,
     padding: 12,
-    marginTop: 16,
+    marginTop: 18,
   },
   stat: { flex: 1, alignItems: "center" },
   statValue: { color: "#FFFFFF", fontSize: 18, fontWeight: "800" },
