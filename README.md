@@ -163,8 +163,8 @@ This works because users on social platforms have been trained to read hashtags 
 
 ## What to Build Next (4-Week Roadmap)
 
-### Week 1 — Personalised tags (everyone sees something different)
-Right now every user sees the same 12 tags. With a small onboarding step (pick 3 interests), the AI clustering prompt can be weighted toward topics the user cares about. The same RSS pipeline runs once; a lightweight re-ranking pass per user makes the results feel personal without an expensive per-user AI call.
+### Week 1 — Personalised tags
+Right now every user sees the same 12 tags (by design — a shared 30-minute cache, disk-persisted across restarts, ensures consistency). With a small onboarding step (pick 3 interests), the AI clustering prompt can be weighted toward topics the user cares about. The same RSS pipeline runs once; a lightweight re-ranking pass per user makes the results feel personal without an expensive per-user AI call.
 
 ### Week 2 — Heuristic "hours before" (remove AI from time estimation)
 The current age calculation already uses RSS pubDates, but clusters sometimes contain headlines spanning many hours, making the "started X hours ago" figure feel misleading. A better heuristic: use the **median** pubDate rather than the earliest, and show a range (e.g. "2–5 घंटे पहले") when the spread is wide. This makes the figure more honest without any AI involvement.
