@@ -1,8 +1,13 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "PwYP8g-H7LGwE0OTQiqAJ"
 uri = "file://artifacts/sharechat-trends/assets/images/icon.png"
 type = "image"
 title = "trending flame app icon"
+
+[[outputs]]
+id = "HVQU4nv8MEleCnf9CCcEj"
+uri = "file://README.md"
+type = "text"
+title = "README — Trends App"
