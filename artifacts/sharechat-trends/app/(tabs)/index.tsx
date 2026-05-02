@@ -1,12 +1,13 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useMemo, useState } from "react";
 import {
   FlatList,
   Platform,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,27 +31,12 @@ function timeStringHi(date: Date): string {
 
 function dateStringHi(date: Date): string {
   const days = [
-    "रविवार",
-    "सोमवार",
-    "मंगलवार",
-    "बुधवार",
-    "गुरुवार",
-    "शुक्रवार",
-    "शनिवार",
+    "रविवार", "सोमवार", "मंगलवार", "बुधवार",
+    "गुरुवार", "शुक्रवार", "शनिवार",
   ];
   const months = [
-    "जनवरी",
-    "फ़रवरी",
-    "मार्च",
-    "अप्रैल",
-    "मई",
-    "जून",
-    "जुलाई",
-    "अगस्त",
-    "सितंबर",
-    "अक्टूबर",
-    "नवंबर",
-    "दिसंबर",
+    "जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून",
+    "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर",
   ];
   return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
 }
@@ -74,6 +60,7 @@ export default function TrendingScreen() {
   const rest = filtered.slice(1);
 
   const onRefresh = () => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRefreshing(true);
     setTimeout(() => {
       setNow(new Date());
@@ -81,105 +68,56 @@ export default function TrendingScreen() {
     }, 800);
   };
 
-  const topInset =
-    Platform.OS === "web" ? Math.max(insets.top, 12) : insets.top;
-  const bottomInset =
-    Platform.OS === "web" ? insets.bottom + 100 : insets.bottom + 90;
+  const topInset = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
+
+  // bottom bar height: filter row (~52) + refresh row (~52) + gap (8) + padding (12+12)
+  const BOTTOM_BAR_CONTENT_HEIGHT = 124;
+  const bottomBarHeight = BOTTOM_BAR_CONTENT_HEIGHT + (Platform.OS === "web" ? 34 : insets.bottom);
+  const listBottomPad = bottomBarHeight + 8;
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View style={[styles.header, { paddingTop: topInset + 8 }]}>
-        <View style={styles.headerRow}>
-          <View>
-            <View style={styles.brandRow}>
-              <View
-                style={[
-                  styles.brandDot,
-                  { backgroundColor: colors.primary },
-                ]}
-              />
-              <Text
-                style={[styles.brand, { color: colors.foreground }]}
-              >
-                ट्रेंड्स
-              </Text>
-            </View>
-            <Text
-              style={[styles.subhead, { color: colors.mutedForeground }]}
-            >
-              {dateStringHi(now)} · अपडेट {timeStringHi(now)}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={onRefresh}
-            activeOpacity={0.7}
-            style={[
-              styles.refreshBtn,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Feather
-              name="refresh-cw"
-              size={16}
-              color={colors.foreground}
-            />
-          </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
+      {/* ── Slim top strip ── */}
+      <View style={[styles.topStrip, { paddingTop: topInset + 6, backgroundColor: colors.background }]}>
+        <View style={styles.brandRow}>
+          <View style={[styles.brandDot, { backgroundColor: colors.primary }]} />
+          <Text style={[styles.brand, { color: colors.foreground }]}>ट्रेंड्स</Text>
         </View>
+        <Text style={[styles.subhead, { color: colors.mutedForeground }]}>
+          {dateStringHi(now)} · अपडेट {timeStringHi(now)}
+        </Text>
       </View>
 
+      {/* ── Scrollable feed ── */}
       <FlatList
         data={rest}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingBottom: bottomInset,
+          paddingTop: 12,
+          paddingBottom: listBottomPad,
           gap: 12,
         }}
         ListHeaderComponent={
           <View style={{ gap: 16 }}>
-            <CategoryFilter value={filter} onChange={setFilter} />
             {hero ? <HotTrendHero trend={hero} /> : null}
             <View style={styles.sectionTitleRow}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.foreground },
-                ]}
-              >
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
                 आज भारत में क्या ट्रेंड है
               </Text>
-              <Text
-                style={[
-                  styles.sectionCount,
-                  { color: colors.mutedForeground },
-                ]}
-              >
+              <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
                 {filtered.length} टॉप टैग
               </Text>
             </View>
           </View>
         }
         renderItem={({ item }) => <TrendCard trend={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: 0 }} />}
         ListEmptyComponent={
           !hero ? (
             <View style={styles.empty}>
-              <Feather
-                name="inbox"
-                size={32}
-                color={colors.mutedForeground}
-              />
-              <Text
-                style={[
-                  styles.emptyText,
-                  { color: colors.mutedForeground },
-                ]}
-              >
+              <Feather name="inbox" size={32} color={colors.mutedForeground} />
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
                 इस श्रेणी में अभी कोई ट्रेंड नहीं
               </Text>
             </View>
@@ -195,20 +133,53 @@ export default function TrendingScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {/* ── Sticky bottom nav bar ── */}
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 8,
+          },
+        ]}
+      >
+        {/* Category filter — the main interactive nav */}
+        <CategoryFilter value={filter} onChange={setFilter} />
+
+        {/* Divider + refresh row */}
+        <View style={[styles.refreshRow]}>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <Pressable
+            onPress={onRefresh}
+            style={({ pressed }) => [
+              styles.refreshBtn,
+              {
+                backgroundColor: pressed ? colors.muted : colors.card,
+                borderColor: colors.border,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Feather name="refresh-cw" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.refreshText, { color: colors.mutedForeground }]}>
+              रिफ़्रेश
+            </Text>
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+
+  topStrip: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   brandRow: {
     flexDirection: "row",
@@ -216,34 +187,26 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   brandDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   brand: {
-    fontSize: 26,
+    fontSize: 20,
     fontWeight: "800",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   subhead: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
+    marginTop: 2,
     fontWeight: "600",
-    marginLeft: 18,
+    marginLeft: 16,
   },
-  refreshBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 4,
   },
   sectionTitle: {
     fontSize: 15,
@@ -253,6 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+
   empty: {
     alignItems: "center",
     paddingVertical: 60,
@@ -261,5 +225,39 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+
+  // Bottom nav
+  bottomBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopWidth: 1,
+    paddingTop: 10,
+    gap: 6,
+  },
+  refreshRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  refreshBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  refreshText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
 });
