@@ -1,0 +1,131 @@
+REQUIRED CHANGES
+1. Modify AI Prompt (CRITICAL)
+
+Update the OpenAI prompt so that it:
+
+DOES NOT generate:
+heat
+momentum
+MUST generate:
+id
+titleHi
+tag
+descriptionHi
+category
+categoryLabelHi
+headlineCount
+sources
+primarySource
+region
+startedHoursAgo
+topLanguages
+sourceHeadlines (VERBATIM from input)
+
+Strict rules:
+
+No hallucinated engagement metrics
+sourceHeadlines must be exact copies
+headlineCount must match clustered headlines
+2. Implement Deterministic Heat Score
+
+Create a function:
+
+function computeHeatScore(trend) {
+  const { headlineCount, sources, startedHoursAgo, sourceHeadlines } = trend;
+
+  const volumeScore = Math.min(headlineCount * 8, 40);
+  const sourceScore = sources.length * 5;
+
+  let freshnessScore = 0;
+  if (startedHoursAgo <= 6) freshnessScore = 20;
+  else if (startedHoursAgo <= 12) freshnessScore = 15;
+  else if (startedHoursAgo <= 24) freshnessScore = 10;
+  else freshnessScore = 5;
+
+  const recencyPenalty = Math.min(startedHoursAgo / 10, 10);
+
+  // Keyword repetition boost
+  const words = sourceHeadlines.join(" ").toLowerCase().split(/\s+/);
+  const freq = {};
+  for (const w of words) {
+    if (w.length > 4) freq[w] = (freq[w] || 0) + 1;
+  }
+  const keywordBoost = Math.min(Math.max(...Object.values(freq), 0) * 2, 10);
+
+  let heat =
+    volumeScore +
+    sourceScore +
+    freshnessScore -
+    recencyPenalty +
+    keywordBoost;
+
+  // Clamp between 60–100
+  return Math.max(60, Math.min(100, Math.round(heat)));
+}
+3. Implement Momentum Logic
+function computeMomentum(trend) {
+  const { startedHoursAgo, headlineCount } = trend;
+
+  if (startedHoursAgo <= 6 && headlineCount >= 3) return "rising";
+  if (startedHoursAgo <= 24 && headlineCount >= 4) return "peaking";
+  return "cooling";
+}
+4. Post-process AI Output
+
+After parsing GPT response:
+
+Compute:
+heat (using computeHeatScore)
+momentum (using computeMomentum)
+Sort trends by heat DESC
+Assign rank based on sorted order
+
+Example:
+
+const enriched = trends.map((t) => ({
+  ...t,
+  heat: computeHeatScore(t),
+  momentum: computeMomentum(t),
+}));
+
+const ranked = enriched
+  .sort((a, b) => b.heat - a.heat)
+  .map((t, i) => ({
+    ...t,
+    rank: i + 1,
+  }));
+5. Code Quality Requirements
+Keep code modular (separate scoring utils)
+Add inline comments explaining logic
+Ensure type safety (TypeScript preferred)
+Handle edge cases (empty headlines, missing fields)
+6. Output Format (Final API)
+
+Return:
+
+{
+  trends: ranked,
+  fetchedAt: ISO_STRING,
+  cachedUntil: ISO_STRING,
+  headlinesUsed: number
+}
+🧠 PRODUCT REQUIREMENTS (IMPORTANT)
+Trends must reflect CURRENT day (freshness matters)
+Should work for Indian + Hindi-speaking audience
+Explainable scoring (no black-box AI decisions)
+System should be tunable (weights adjustable)
+🎯 GOAL
+
+Refactor the existing backend so that:
+
+AI = structure + clustering
+Backend = scoring + ranking
+
+Make minimal breaking changes but ensure production-quality logic.
+
+Return:
+
+Updated OpenAI prompt
+New utility functions
+Updated route handler
+Any improvements you recommend

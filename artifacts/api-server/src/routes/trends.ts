@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { computeHeatScore, computeMomentum, type ScoringInput } from "../utils/trendScoring.js";
 
 const router = Router();
 
@@ -21,6 +22,23 @@ interface RssItem {
   title: string;
   source: string;
   pubDate: string | null;
+}
+
+// ── Raw trend shape returned by the AI (no heat/momentum — computed by us) ───
+interface AiTrend {
+  id: string;
+  titleHi: string;
+  tag: string;
+  descriptionHi: string;
+  category: string;
+  categoryLabelHi: string;
+  headlineCount: number;
+  sources: string[];
+  primarySource: string;
+  region: string;
+  startedHoursAgo: number;
+  topLanguages: string[];
+  sourceHeadlines: string[];
 }
 
 // ── Tiny XML parser ─────────────────────────────────────────────────────────
@@ -86,7 +104,7 @@ router.get("/trends", async (req, res) => {
 
     req.log.info({ count: allItems.length }, "Headlines fetched, calling AI");
 
-    // Build numbered list with source + pubDate so AI can cite them by index
+    // Build numbered list with source + pubDate so AI can cite timestamps
     const numberedHeadlines = allItems
       .map((item, i) => {
         const date = item.pubDate ? ` (${item.pubDate})` : "";
@@ -94,10 +112,13 @@ router.get("/trends", async (req, res) => {
       })
       .join("\n");
 
-    // Step 2: Ask GPT to cluster headlines into trending topics
-    // IMPORTANT: AI must cite the ACTUAL headline indices — no invented text
+    // Step 2: Ask GPT to cluster headlines into trending topics.
+    //
+    // IMPORTANT: AI handles ONLY structure + clustering.
+    // heat and momentum are NOT in the prompt — they are computed
+    // deterministically in Step 3 using trendScoring.ts.
     const prompt = `
-You are a trending topics analyst for ShareChat, India's leading vernacular social media platform.
+You are a trending topics analyst for India's leading vernacular social media platform.
 
 Below are ${allItems.length} real news headlines scraped RIGHT NOW from RSS feeds (Google News India, BBC Hindi, NDTV, The Hindu). Each line starts with a 1-based index number.
 
@@ -112,23 +133,20 @@ Your job:
 - descriptionHi: one Hindi sentence (Devanagari, max 25 words) explaining WHY it is trending
 - category: one of [sports, news, entertainment, festival, finance, tech, weather, politics, viral]
 - categoryLabelHi: Hindi label for the category (e.g. "राजनीति", "खेल")
-- heat: integer 60–100. Base this on: how many headlines mention this topic (more = higher heat), how many different sources cover it, and how prominently it was covered. Rank 1 trend should be ~95-100. This is a relative measure — do NOT invent any platform engagement number.
-- headlineCount: exact integer — the number of headlines from the list below that you clustered into this trend
-- sources: array of signal types inferred from the headline sources. Use only: [news, social, search, video, cross-platform]. "news" for any RSS source. Add "social" only if the headline explicitly mentions social media trend/viral. Add "video" only if the headline mentions video/YouTube.
-- primarySource: the single most dominant source type from the sources array
+- headlineCount: exact integer — count of headlines from the list below clustered into this trend
+- sources: array of signal types inferred from headline sources. Use ONLY: [news, social, search, video, cross-platform]. Use "news" for any RSS source. Add "social" only if a headline explicitly mentions social media trend/viral. Add "video" only if a headline mentions video/YouTube.
+- primarySource: the single most dominant entry from the sources array
 - region: most relevant Indian region in Hindi (e.g. "अखिल भारत", "मुंबई", "पश्चिम बंगाल")
-- startedHoursAgo: integer 1–72 — your best estimate based on pubDates in the headlines and how the story is framed ("breaking" vs "follow-up" vs "analysis")
-- momentum: one of [rising, peaking, cooling] — based on whether headlines are initial reports (rising), peak coverage (peaking), or follow-up/retrospective (cooling)
-- topLanguages: array of 1–3 Indian language names in Hindi (e.g. ["हिन्दी", "बंगाली"]) — based on the regional relevance of the story
-- sourceHeadlines: array of the VERBATIM headline titles (just the title text, no source prefix) from the input list that you used for this trend. These must be EXACT COPIES of text from the numbered list. Do NOT paraphrase or invent. Include 2–5 headlines per trend.
-
-Rank the 12 trends 1–12 (rank 1 = hottest, highest heat).
+- startedHoursAgo: integer 1–72 — best estimate based on pubDates and headline framing ("breaking" vs "follow-up" vs "analysis")
+- topLanguages: array of 1–3 Indian language names in Hindi (e.g. ["हिन्दी", "बंगाली"]) based on regional relevance
+- sourceHeadlines: array of VERBATIM headline title texts from the input list used for this trend. EXACT COPIES only — no paraphrasing. Include 2–5 per trend.
 
 IMPORTANT DATA INTEGRITY RULES:
-- Do NOT invent post counts, view counts, likes, comments, or any engagement metrics.
+- Do NOT generate heat, momentum, rank, or any engagement metrics — those are computed server-side.
+- Do NOT invent post counts, view counts, likes, comments, or any platform engagement numbers.
 - Do NOT generate fake social media posts or fake user names.
 - sourceHeadlines must be verbatim copies of actual input headlines — never paraphrased.
-- heat and headlineCount must be consistent: a trend with headlineCount=1 cannot have heat=95.
+- headlineCount must exactly equal the number of headlines you clustered.
 
 Output ONLY a valid JSON array of 12 objects. No markdown, no explanation, no wrapping.
 
@@ -144,13 +162,29 @@ ${numberedHeadlines}
 
     const raw = completion.choices[0]?.message?.content ?? "[]";
     const cleaned = raw.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
-    const trends: unknown[] = JSON.parse(cleaned);
+    const aiTrends: AiTrend[] = JSON.parse(cleaned);
 
-    // Add rank field based on position (AI may forget)
-    const ranked = (trends as Array<Record<string, unknown>>).map((t, i) => ({
-      ...t,
-      rank: i + 1,
-    }));
+    // Step 3: Post-process — compute heat + momentum deterministically,
+    // then sort by heat DESC and assign final rank.
+    // This means ranking is fully explainable and not a GPT black box.
+    const enriched = aiTrends.map((t) => {
+      const scoringInput: ScoringInput = {
+        headlineCount: t.headlineCount,
+        sources: t.sources,
+        startedHoursAgo: t.startedHoursAgo,
+        sourceHeadlines: t.sourceHeadlines,
+      };
+      return {
+        ...t,
+        heat: computeHeatScore(scoringInput),
+        momentum: computeMomentum(scoringInput),
+      };
+    });
+
+    // Sort hottest first, then assign 1-based rank
+    const ranked = enriched
+      .sort((a, b) => b.heat - a.heat)
+      .map((t, i) => ({ ...t, rank: i + 1 }));
 
     const now = new Date();
     const result = {
