@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   FlatList,
   Platform,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -69,17 +68,14 @@ export default function TrendingScreen() {
   };
 
   const topInset = Platform.OS === "web" ? Math.max(insets.top, 67) : insets.top;
-
-  // bottom bar height: filter row (~52) + refresh row (~52) + gap (8) + padding (12+12)
-  const BOTTOM_BAR_CONTENT_HEIGHT = 124;
-  const bottomBarHeight = BOTTOM_BAR_CONTENT_HEIGHT + (Platform.OS === "web" ? 34 : insets.bottom);
+  const bottomBarHeight = 62 + (Platform.OS === "web" ? 34 : insets.bottom);
   const listBottomPad = bottomBarHeight + 8;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      {/* ── Slim top strip ── */}
-      <View style={[styles.topStrip, { paddingTop: topInset + 6, backgroundColor: colors.background }]}>
+      {/* Slim top strip */}
+      <View style={[styles.topStrip, { paddingTop: topInset + 6 }]}>
         <View style={styles.brandRow}>
           <View style={[styles.brandDot, { backgroundColor: colors.primary }]} />
           <Text style={[styles.brand, { color: colors.foreground }]}>ट्रेंड्स</Text>
@@ -89,7 +85,7 @@ export default function TrendingScreen() {
         </Text>
       </View>
 
-      {/* ── Scrollable feed ── */}
+      {/* Scrollable feed */}
       <FlatList
         data={rest}
         keyExtractor={(item) => item.id}
@@ -134,7 +130,7 @@ export default function TrendingScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* ── Sticky bottom nav bar ── */}
+      {/* Sticky bottom category filter */}
       <View
         style={[
           styles.bottomBar,
@@ -145,30 +141,7 @@ export default function TrendingScreen() {
           },
         ]}
       >
-        {/* Category filter — the main interactive nav */}
         <CategoryFilter value={filter} onChange={setFilter} />
-
-        {/* Divider + refresh row */}
-        <View style={[styles.refreshRow]}>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <Pressable
-            onPress={onRefresh}
-            style={({ pressed }) => [
-              styles.refreshBtn,
-              {
-                backgroundColor: pressed ? colors.muted : colors.card,
-                borderColor: colors.border,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <Feather name="refresh-cw" size={14} color={colors.mutedForeground} />
-            <Text style={[styles.refreshText, { color: colors.mutedForeground }]}>
-              रिफ़्रेश
-            </Text>
-          </Pressable>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        </View>
       </View>
     </View>
   );
@@ -227,7 +200,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // Bottom nav
   bottomBar: {
     position: "absolute",
     left: 0,
@@ -235,29 +207,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopWidth: 1,
     paddingTop: 10,
-    gap: 6,
-  },
-  refreshRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-  },
-  refreshBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  refreshText: {
-    fontSize: 12,
-    fontWeight: "700",
   },
 });
