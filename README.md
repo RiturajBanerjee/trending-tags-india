@@ -153,8 +153,6 @@ This works because users on social platforms have been trained to read hashtags 
 
 ### What was considered and rejected
 
-- **Images** — news thumbnails would break the visual rhythm and require image proxying. The tag-first layout works without them.
-- **Article links inline** — decided against this to keep the feed clean and focused on the trending topic rather than any single article's angle.
 - **AI-generated heat scores** — rejected because they're a black box and inconsistent. A trending topic scored 84 by AI on one run might score 71 on the next with no explanation. The deterministic formula always gives the same score for the same inputs.
 - **Full category nav bar (top)** — a top navigation bar would push the content down and reduce above-the-fold density. The bottom filter bar keeps the primary surface clean and follows mobile navigation conventions (thumb-reachable).
 - **Showing all categories** — if today's data has no weather or festival trends, those filter pills disappear. Showing empty categories creates confusion ("why is there nothing here?").
@@ -175,10 +173,3 @@ Each `sourceHeadlines` item already contains the exact headline text. Adding the
 ### Week 4 — Live score updates + push notifications
 The 30-minute cache means a story can break and users won't see it for half an hour. A background refresh every 5 minutes (server-side only, no AI — just re-score the cached clusters against fresh headline counts) would keep the heat scores live. Combine this with Expo Push Notifications: when a topic crosses a heat score threshold for the first time, send a push. This turns the app from something users open into something that comes to them.
 
-### Beyond the roadmap
-
-- **Regional editions** — separate RSS feeds for Maharashtra, Bengal, Tamil Nadu, etc. with a region toggle. Heat scoring already uses a region field; the infrastructure is there.
-- **Trend history** — store scored results every 30 minutes in a database. Show a sparkline on each card: is this topic growing or shrinking over the last 6 hours?
-- **Source credibility weighting** — not all RSS sources are equal. A story covered by BBC Hindi should contribute more to the heat score than a smaller outlet. A per-source credibility weight (editable config) would improve ranking quality significantly.
-- **Content moderation filter** — a lightweight keyword blocklist (server-side, no AI) to prevent sensitive or harmful topics from surfacing in the feed, important for a platform with a broad Hindi-speaking audience.
-- **Heat score explainer in-app** — the detail screen already shows the heat score number, but users have no way to know what it means. A small tooltip or expandable panel explaining the formula in plain Hindi ("यह स्कोर खबरों की संख्या, ताज़गी, और कितनी जगहों से आई, इस पर निर्भर है") would build trust in the ranking and differentiate it from a black-box algorithm. The weights are already documented in code and easy to surface.
